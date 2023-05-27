@@ -1,0 +1,15 @@
+[package]
+name = "rust_rsa"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "rsa"
+path = "src/lib/mod.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version = "4.2.2", features = ["derive"] }
+rug = "1.19.2"
+rand = "0.8.5"

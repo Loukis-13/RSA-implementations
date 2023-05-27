@@ -1,0 +1,69 @@
+#! /usr/bin/env python
+
+import argparse
+import primes
+
+
+def __keygen(args):
+    p = args.p or primes.gen_prime(args.bit_len)
+    q = args.q or primes.gen_prime(args.bit_len)
+    n = p * q
+    o = (p - 1) * (q - 1)
+    e = primes.gen_coprime(o)
+    d = pow(e, -1, o)
+
+    if args.print:
+        print(f"Public  key: ({e:X}, {n:X})")
+        print(f"Private key: ({d:X}, {n:X})")
+
+    file = args.name
+    with open(f"{file}.pub", "w") as pub, open(file, "w") as pri:
+        pub.write(f"{e:X} {n:X}\n")
+        pri.write(f"{d:X} {n:X}\n")
+
+
+def __encrypt(args):
+    x = int.from_bytes(args.text.encode(), "big")
+    e, n = args.keys
+
+    print(f"{pow(x, e, n):X}")
+
+
+def __decrypt(args):
+    d, n = args.keys
+    x = pow(int(args.text, 16), d, n)
+
+    print(x.to_bytes((x.bit_length() + 7) // 8, "big").decode())
+
+
+def prime(n):
+    n = int(n)
+    if primes.is_prime(n):
+        return n
+    else:
+        raise ValueError(f"{n} is not prime")
+
+
+parser = argparse.ArgumentParser(prog="RSA", description="RSA algorithm implemented in Python")
+subparsers = parser.add_subparsers(required=True, help="RSA options")
+
+keygen = subparsers.add_parser("keygen", help="generate the public and private keys pair")
+keygen.add_argument("-p", type=prime, help="define the value of p, randomly generated if not passed")
+keygen.add_argument("-q", type=prime, help="define the value of q, randomly generated if not passed")
+keygen.add_argument("--print", action="store_true", help="print the keys")
+keygen.add_argument("--name", type=str, default="RSA-key", help="name of the files that will store the keys. (Defaul 'RSA-key')")
+keygen.add_argument("--bit_len", type=int, default=128, help="bit length of the generated numbers (default 128)")
+keygen.set_defaults(func=__keygen)
+
+encrypt = subparsers.add_parser("encrypt", help="encrypt string using RSA public keys")
+encrypt.add_argument("text", type=str, help="string to be encrypted")
+encrypt.add_argument("keys", type=lambda x: int(x, 16), nargs=2, help="RSA public key pair")
+encrypt.set_defaults(func=__encrypt)
+
+decrypt = subparsers.add_parser("decrypt", help="decrypt string using RSA private keys")
+decrypt.add_argument("text", type=str, help="string to be decrypted")
+decrypt.add_argument("keys", type=lambda x: int(x, 16), nargs=2, help="RSA private key pair")
+decrypt.set_defaults(func=__decrypt)
+
+args = parser.parse_args()
+args.func(args)
